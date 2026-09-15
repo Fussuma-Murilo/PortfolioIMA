@@ -1,0 +1,265 @@
+Enum status_processamento_validacao {
+  PENDENTE
+  PROCESSANDO
+  PROCESSADO
+  ERRO
+}
+
+Enum status_geral_validacao {
+  APROVADO
+  APROVADO_COM_RESSALVAS
+  REPROVADO
+}
+
+Enum origem_validacao {
+  IMPORTACAO_XML
+  CRIACAO
+  ATUALIZACAO
+  MANUAL
+}
+
+Enum escopo_achado {
+  CABECALHO
+  ITEM
+}
+
+Enum severidade_achado {
+  ERRO
+  ALERTA
+  INFO
+}
+
+Table documento_fiscal {
+  id_documento_fiscal            "NUMBER(19)"        [pk]
+  ativo                          "NUMBER(1)"         [not null, default: 1]
+  tipo_documento                 "VARCHAR2(20)"      [not null]
+  chave_acesso                   "VARCHAR2(60)"      [not null, unique]
+  numero                         "VARCHAR2(20)"
+  serie                          "VARCHAR2(10)"
+  modelo                         "VARCHAR2(5)"
+  data_emissao                   timestamp
+  data_entrada_saida             timestamp
+  natureza_operacao              "VARCHAR2(255)"
+  tipo_operacao                  "VARCHAR2(20)"
+  status_documento               "VARCHAR2(20)"
+  id_emitente                    "NUMBER(19)"        [not null, ref: > parceiro.id_parceiro]
+  id_destinatario                "NUMBER(19)"        [ref: > parceiro.id_parceiro]
+  id_transportadora              "NUMBER(19)"        [ref: > parceiro.id_parceiro]
+  valor_bruto                    "NUMBER(18,2)"
+  valor_desconto                 "NUMBER(18,2)"
+  valor_frete                    "NUMBER(18,2)"
+  valor_seguro                   "NUMBER(18,2)"
+  valor_outros                   "NUMBER(18,2)"
+  valor_impostos                 "NUMBER(18,2)"
+  valor_total                    "NUMBER(18,2)"
+  valor_icms                     "NUMBER(18,2)"
+  valor_ipi                      "NUMBER(18,2)"
+  valor_pis                      "NUMBER(18,2)"
+  valor_cofins                   "NUMBER(18,2)"
+  id_arquivo_xml                 "NUMBER(19)"
+  data_criacao                   timestamp           [not null]
+  id_usuario_criacao             "NUMBER(19)"        [not null]
+  data_ultima_atualizacao        timestamp
+  id_usuario_ultima_atualizacao  "NUMBER(19)"
+
+  indexes {
+    chave_acesso [unique, name: 'uk_documento_fiscal_chave']
+    (id_emitente, data_emissao)
+  }
+}
+
+Table documento_fiscal_item {
+  id_documento_fiscal_item  "NUMBER(19)"     [pk]
+  id_documento_fiscal       "NUMBER(19)"     [not null, ref: > documento_fiscal.id_documento_fiscal]
+  numero_item               "NUMBER(10)"     [not null]
+  codigo_produto            "VARCHAR2(100)"
+  descricao_produto         "VARCHAR2(500)"
+  ncm                       "VARCHAR2(20)"
+  cfop                      "VARCHAR2(10)"
+  unidade_comercial         "VARCHAR2(20)"
+  quantidade                "NUMBER(18,4)"
+  valor_unitario            "NUMBER(18,6)"
+  valor_bruto               "NUMBER(18,2)"
+  valor_desconto            "NUMBER(18,2)"
+  valor_frete               "NUMBER(18,2)"
+  valor_seguro              "NUMBER(18,2)"
+  valor_outros              "NUMBER(18,2)"
+  base_calculo_icms         "NUMBER(18,2)"
+  aliquota_icms             "NUMBER(7,4)"
+  valor_icms                "NUMBER(18,2)"
+  base_calculo_ipi          "NUMBER(18,2)"
+  aliquota_ipi              "NUMBER(7,4)"
+  valor_ipi                 "NUMBER(18,2)"
+  base_calculo_pis          "NUMBER(18,2)"
+  aliquota_pis              "NUMBER(7,4)"
+  valor_pis                 "NUMBER(18,2)"
+  base_calculo_cofins       "NUMBER(18,2)"
+  aliquota_cofins           "NUMBER(7,4)"
+  valor_cofins              "NUMBER(18,2)"
+  cst_icms                  "VARCHAR2(5)"
+  cst_pis                   "VARCHAR2(5)"
+  cst_cofins                "VARCHAR2(5)"
+
+  indexes {
+    (id_documento_fiscal, numero_item)
+  }
+}
+
+Table transporte_documento_fiscal {
+  id_transporte_documento  "NUMBER(19)"     [pk]
+  id_documento_fiscal      "NUMBER(19)"     [not null, unique, ref: - documento_fiscal.id_documento_fiscal]
+  modalidade_frete         "VARCHAR2(30)"
+  volumes                  "NUMBER(10)"
+  especie                  "VARCHAR2(60)"
+  marca                    "VARCHAR2(60)"
+  numeracao                "VARCHAR2(60)"
+  peso_bruto               "NUMBER(18,3)"
+  peso_liquido             "NUMBER(18,3)"
+  placa_veiculo            "VARCHAR2(10)"
+  uf_placa                 "VARCHAR2(2)"
+}
+
+Table pagamento_documento_fiscal {
+  id_pagamento_documento  "NUMBER(19)"     [pk]
+  id_documento_fiscal     "NUMBER(19)"     [not null, unique, ref: - documento_fiscal.id_documento_fiscal]
+  forma_pagamento         "VARCHAR2(50)"   [not null]
+  valor_pagamento         "NUMBER(18,2)"
+  quantidade_parcelas     "NUMBER(10)"
+  valor_parcela           "NUMBER(18,2)"
+  valor_total_parcelado   "NUMBER(18,2)"
+  parcelas_uniformes      "NUMBER(1)"
+}
+
+Table parceiro {
+  id_parceiro      "NUMBER(19)"     [pk]
+  tipo_parceiro    "VARCHAR2(20)"   [not null]
+  nome_razao       "VARCHAR2(255)"  [not null]
+  nome_fantasia    "VARCHAR2(255)"
+  documento        "VARCHAR2(20)"
+  tipo_documento   "VARCHAR2(10)"
+  inscr_estadual   "VARCHAR2(20)"
+  inscr_municipal  "VARCHAR2(20)"
+  pais             "VARCHAR2(3)"
+  uf               "VARCHAR2(2)"
+  cidade           "VARCHAR2(100)"
+  cep              "VARCHAR2(20)"
+  endereco         "VARCHAR2(255)"
+  numero           "VARCHAR2(20)"
+  complemento      "VARCHAR2(100)"
+  bairro           "VARCHAR2(100)"
+  email            "VARCHAR2(255)"
+  telefone         "VARCHAR2(50)"
+  ativo            "NUMBER(1)"      [not null, default: 1]
+
+  indexes {
+    documento
+  }
+}
+
+Table NCM {
+  ID_NCM              "NUMBER(19)"     [pk, increment]
+  CD_NCM              "VARCHAR2(8)"    [not null, unique]
+  DS_NCM              "VARCHAR2(500)"  [not null]
+  DT_INICIO_VIGENCIA  date             [not null]
+  DT_FIM_VIGENCIA     date
+  FL_ATIVO            "NUMBER(1)"      [not null, default: 1]
+}
+
+Table arquivo_xml {
+  id_arquivo_xml         "NUMBER(19)"     [pk]
+  nome_arquivo           "VARCHAR2(255)"
+  caminho_arquivo        "VARCHAR2(500)"
+  hash_conteudo          "VARCHAR2(128)"  [not null, unique]
+  conteudo_xml           clob             [not null]
+  tipo_documento         "VARCHAR2(20)"   [not null]
+  data_importacao        timestamp        [not null]
+  id_usuario_importacao  "NUMBER(19)"     [not null]
+  status_processamento   "VARCHAR2(20)"   [not null]
+  mensagem_erro          "VARCHAR2(255)"
+}
+
+Table validacao_ia {
+  id_validacao            "NUMBER(19)"                   [pk]
+  id_documento_fiscal     "NUMBER(19)"                   [not null, ref: > documento_fiscal.id_documento_fiscal]
+  status_processamento    status_processamento_validacao [not null]
+  status_geral            status_geral_validacao
+  origem                  origem_validacao               [not null]
+  data_solicitacao        timestamp                      [not null]
+  data_conclusao          timestamp
+  mensagem_erro           "VARCHAR2(1000)"
+  id_usuario_solicitacao  "NUMBER(19)"
+  tentativas              "NUMBER(3)"                    [not null, default: 0]
+  modelo_ia               "VARCHAR2(100)"
+  resposta_bruta          clob
+
+  indexes {
+    (id_documento_fiscal, data_solicitacao) [name: 'ix_validacao_ia_doc']
+    (status_processamento, data_solicitacao) [name: 'ix_validacao_ia_status']
+    id_documento_fiscal [unique, name: 'ux_validacao_ia_em_aberto']
+  }
+}
+
+Table validacao_ia_achado {
+  id_achado     "NUMBER(19)"        [pk]
+  id_validacao  "NUMBER(19)"        [not null, ref: > validacao_ia.id_validacao]
+  ordem         "NUMBER(5)"         [not null]
+  escopo        escopo_achado       [not null]
+  numero_item   "NUMBER(10)"
+  campo         "VARCHAR2(100)"
+  severidade    severidade_achado   [not null]
+  mensagem      "VARCHAR2(1000)"    [not null]
+  sugestao      "VARCHAR2(1000)"
+
+  indexes {
+    id_validacao [name: 'ix_achado_validacao']
+  }
+}
+
+Table usuario {
+  idUser        "NUMBER(19)"     [pk]
+  name          "VARCHAR2(255)"
+  email         "VARCHAR2(255)"  [unique]
+  login         "VARCHAR2(100)"  [not null, unique]
+  password      "VARCHAR2(255)"  [not null]
+  active        "NUMBER(1)"      [not null, default: 1]
+  creationDate  timestamp
+  role          "NUMBER"         [not null]
+}
+
+Table role {
+  id_role  "NUMBER(19)"    [pk]
+  role     "VARCHAR2(50)"  [not null, unique]
+  ativo    "NUMBER(1)"     [not null, default: 1]
+}
+
+Ref: documento_fiscal.id_arquivo_xml > arquivo_xml.id_arquivo_xml
+Ref: documento_fiscal.id_usuario_criacao > usuario.idUser
+Ref: arquivo_xml.id_usuario_importacao > usuario.idUser
+Ref: validacao_ia.id_usuario_solicitacao > usuario.idUser
+Ref: documento_fiscal_item.ncm > NCM.CD_NCM
+
+TableGroup "Documento Fiscal" {
+  documento_fiscal
+  documento_fiscal_item
+  transporte_documento_fiscal
+  pagamento_documento_fiscal
+}
+
+TableGroup "Cadastros" {
+  parceiro
+  NCM
+}
+
+TableGroup "Importação XML" {
+  arquivo_xml
+}
+
+TableGroup "Validação por IA" {
+  validacao_ia
+  validacao_ia_achado
+}
+
+TableGroup "Segurança" {
+  usuario
+  role
+}
